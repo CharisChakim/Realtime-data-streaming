@@ -3,7 +3,7 @@ from datetime import datetime
 # from airflow.operator.python import PythonOperator
 # import json
 
-def get_data():
+def get_data(): # get data from API
     import requests
     
     respone = requests.get("https://randomuser.me/api/")
@@ -12,7 +12,7 @@ def get_data():
     return res
 # print(get_data())
 
-def format_data(res):
+def format_data(res): #make data format
     data = {}
     location = res ['location']
     data['first_name'] = res ['name']['first']
@@ -29,12 +29,20 @@ def format_data(res):
     data['picture'] = res['picture']['medium']
     return data
     
-def stream_data():
+def stream_data(): # its for connect into confluent kafka
+    from kafka import KafkaProducer
+    import time
     import json
+    
     res = get_data()
     res = format_data(res)
-    print(json.dumps(res, indent=3))
-# stream_data()
+    # print(json.dumps(res, indent=3))
+    
+    producer = KafkaProducer(bootstrap_servers=['localhost:9092'], max_block_ms=5000) # for connection, 5000 means 5 second
+    producer.send('users_created',json.dumps(res).encode('utf-8')) #for send the data
+    
+    
+
 
 
 # default_args={
@@ -53,3 +61,5 @@ def stream_data():
 #         task_id='stream_data_from_api'
 #         python_callable=stream_data
 #     )
+
+stream_data()
